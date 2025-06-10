@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Build
+dist/
+build/
+
+# Coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+
+JWT_SECRET=your_secure_jwt_secret
+JWT_REFRESH_SECRET=your_secure_refresh_secret
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+EMAIL_USER=your_email
+EMAIL_PASS=your_email_password 
