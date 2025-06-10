@@ -12,7 +12,6 @@ A secure, role-based authentication system built with Node.js, Express, and Mong
   - Account Lockout
   - Password Reset
   - Session Management
-- 📱 Phone Number Verification (OTP)
 - 👮‍♂️ Admin Dashboard Features
   - User Management
   - Block/Unblock Users
@@ -109,6 +108,8 @@ Content-Type: application/json
 }
 ```
 
+**Note:** A verification email will be sent with a verification code and link.
+
 #### Login
 
 ```http
@@ -133,6 +134,14 @@ Content-Type: application/json
   }
 }
 ```
+
+**Note:**
+
+- Sets HTTP-only cookies:
+  - `token` (15 minutes expiry)
+  - `refreshToken` (7 days expiry)
+- Cookies are secure in production
+- Cookies are SameSite: strict
 
 #### Verify Email
 
@@ -160,6 +169,106 @@ Authorization: Bearer {token}
 ```json
 {
   "message": "Logged out successfully"
+}
+```
+
+**Note:**
+
+- Requires valid JWT token in Authorization header
+- Clears both token and refreshToken cookies
+- Blacklists the current token
+
+#### Refresh Token
+
+```http
+POST /api/auth/refresh-token
+Content-Type: application/json
+
+{
+    "refreshToken": "string" // Optional if sent as a cookie
+}
+```
+
+**How to send the refresh token:**
+
+- You can send the refresh token in the request body (as shown above), **or**
+- You can send it as a cookie named `refreshToken` (recommended for browser clients).
+
+**Response:**
+
+```json
+{
+  "status": "success",
+  "message": "Token refreshed successfully"
+}
+```
+
+**Errors:**
+
+- 401 Unauthorized: If the refresh token is missing, invalid, or expired.
+
+#### Forgot Password
+
+```http
+POST /api/auth/forgot-password
+Content-Type: application/json
+
+{
+    "email": "string"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Password reset email sent"
+}
+```
+
+#### Reset Password
+
+```http
+POST /api/auth/reset-password
+Content-Type: application/json
+Authorization: Bearer {token}
+
+{
+    "password": "string",
+    "confirmPassword": "string"
+}
+```
+
+**Response:**
+
+```json
+{
+  "message": "Password reset successful"
+}
+```
+
+#### Get User Profile
+
+```http
+GET /api/auth/profile
+Authorization: Bearer {token}
+```
+
+**Description:**
+Returns the profile information of the currently logged-in user. Requires a valid JWT token in the Authorization header.
+
+**Response:**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "name": "string",
+    "email": "string",
+    "phone": "string",
+    "role": "string",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
 }
 ```
 
@@ -263,10 +372,9 @@ The API implements role-based access control (RBAC) with the following roles:
 4. Account Lockout
 5. Secure Password Reset
 6. Email Verification
-7. Phone Number Verification
-8. Session Management
-9. Token Blacklisting
-10. Security Headers (Helmet)
+7. Session Management
+8. Token Blacklisting
+9. Security Headers (Helmet)
 
 ## Error Handling
 
