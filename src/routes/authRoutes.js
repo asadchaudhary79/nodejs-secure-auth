@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { validateRegistration, validateLogin, validatePasswordReset, validate, validatePhone, loginLimiter, registerLimiter, forgotPasswordLimiter } = require('../middlewares/securityMiddleware');
+const { validateRegistration, validateLogin, validatePasswordReset, validate,loginLimiter, registerLimiter, forgotPasswordLimiter } = require('../middlewares/securityMiddleware');
 const { verifyToken } = require('../middlewares/authMiddleware');
 
 
 // Register route with validation
-router.post('/register', validateRegistration, validate, authController.register);
+router.post('/register', validateRegistration, registerLimiter, validate, authController.register);
 
 // Login route with validation
 router.post('/login', loginLimiter, validateLogin, validate, authController.login);

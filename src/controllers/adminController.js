@@ -1,21 +1,57 @@
 const User = require('../models/User');
 
-// Get all blocked users
+// Get all blocked users with enhanced error handling and attractive responses
 exports.getBlockedUsers = async (req, res) => {
     try {
-        const blockedUsers = await User.find({ isBlocked: true })
-            .select('name email phone role blockReason blockExpiresAt createdAt')
-            .sort({ blockExpiresAt: 1 });
-
-        res.json({
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+        
+        const { role, search } = req.query;
+        
+        // Build filter
+        let filter = { isBlocked: true };
+        if (role) filter.role = role;
+        if (search) {
+            filter.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        // Get blocked users
+        const blockedUsers = await User.find(filter)
+            .select('name email role blockReason blockExpiresAt blockedAt')
+            .skip(skip)
+            .limit(limit);
+            
+        const totalUsers = await User.countDocuments(filter);
+        
+        if (blockedUsers.length === 0) {
+            return res.status(200).json({
+                status: 'success',
+                message: '🎉 No users are currently blocked in the system'
+            });
+        }
+        
+        res.status(200).json({
             status: 'success',
-            data: blockedUsers
+            message: `Found ${blockedUsers.length} blocked users`,
+            data: {
+                users: blockedUsers,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(totalUsers / limit),
+                    totalUsers
+                }
+            }
         });
+        
     } catch (error) {
         res.status(500).json({
             status: 'error',
-            message: 'Error fetching blocked users',
-            error: error.message
+            message: 'Failed to fetch blocked users',
+            error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
         });
     }
 };

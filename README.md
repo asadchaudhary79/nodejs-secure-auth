@@ -272,97 +272,11 @@ Returns the profile information of the currently logged-in user. Requires a vali
 }
 ```
 
-### Admin Endpoints
+### Admin API
 
-#### Get Blocked Users
+For comprehensive admin functionality including user management, blocking/unblocking users, and administrative controls, please refer to the dedicated Admin API documentation:
 
-```http
-GET /api/admin/blocked-users
-Authorization: Bearer {token}
-```
-
-**Access Control:**
-
-- Required Roles: `admin` or `moderator`
-
-**Response:**
-
-```json
-{
-  "status": "success",
-  "data": [
-    {
-      "id": "string",
-      "name": "string",
-      "email": "string",
-      "blockReason": "string",
-      "blockExpiresAt": "2024-01-01T00:00:00.000Z",
-      "blockedBy": "string"
-    }
-  ]
-}
-```
-
-#### Block User
-
-```http
-POST /api/admin/block-user/:userId
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-    "reason": "string",
-    "duration": "number" // Duration in hours (optional)
-}
-```
-
-**Access Control:**
-
-- Required Role: `admin` only
-
-**Response:**
-
-```json
-{
-  "status": "success",
-  "message": "User blocked successfully",
-  "data": {
-    "userId": "string",
-    "blockReason": "string",
-    "blockExpiresAt": "2024-01-01T00:00:00.000Z"
-  }
-}
-```
-
-#### Unblock User
-
-```http
-POST /api/admin/unblock-user/:userId
-Authorization: Bearer {token}
-```
-
-**Access Control:**
-
-- Required Role: `admin` only
-
-**Response:**
-
-```json
-{
-  "status": "success",
-  "message": "User unblocked successfully"
-}
-```
-
-## Role-Based Access Control
-
-The API implements role-based access control (RBAC) with the following roles:
-
-| Role      | Permissions                                                                                                                     |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| admin     | - Full access to all endpoints<br>- Can block/unblock users<br>- Can view all blocked users<br>- Can manage all system settings |
-| moderator | - Can view blocked users<br>- Cannot block/unblock users<br>- Limited administrative access                                     |
-| user      | - Basic user access<br>- Cannot access administrative endpoints                                                                 |
+📋 **[Admin API Documentation](./ADMIN_API_DOCS.md)**
 
 ## Security Features
 
@@ -408,8 +322,4 @@ Common HTTP Status Codes:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_twitter)
-
-Project Link: [https://github.com/asadchaudhary79/nodejs-secure-auth](https://github.com/asadchaudhary79/nodejs-secure-auth)

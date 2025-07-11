@@ -4,7 +4,7 @@ const emailConfig = {
     sendgrid: {
         apiKey: process.env.SENDGRID_API_KEY,
         from: {
-            email: process.env.SENDGRID_FROM_EMAIL,
+            email: process.env.ADMIN_EMAIL,
             name: process.env.SENDGRID_FROM_NAME || 'Your Company'
         }
     },
