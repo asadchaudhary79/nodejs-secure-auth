@@ -23,7 +23,9 @@ const userSchema = new mongoose.Schema({
     passwordHistory: [{
         password: String,
         timestamp: { type: Date, default: Date.now }
-    }]
+    }],
+    is2FaActivated: { type: Boolean, default: false },
+    twoFactorSecret: { type: String }
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

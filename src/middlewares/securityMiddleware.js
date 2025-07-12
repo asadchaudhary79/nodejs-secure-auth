@@ -75,6 +75,25 @@ const validatePhone = body('phone')
     .matches(phoneRegex)
     .withMessage('Phone number must be in the format +923XXXXXXXXX');
 
+// 2FA validation
+const validateTwoFactorToken = [
+    body('email')
+        .isEmail().withMessage('Please enter a valid email'),
+    body('token')
+        .isLength({ min: 6, max: 6 })
+        .withMessage('2FA token must be exactly 6 digits')
+        .isNumeric()
+        .withMessage('2FA token must contain only numbers'),
+];
+
+const validateTwoFactorSetup = [
+    body('token')
+        .isLength({ min: 6, max: 6 })
+        .withMessage('2FA token must be exactly 6 digits')
+        .isNumeric()
+        .withMessage('2FA token must contain only numbers'),
+];
+
 // Validation middleware
 const validate = (req, res, next) => {
     const errors = validationResult(req);
@@ -99,6 +118,8 @@ module.exports = {
     validateRegistration,
     validateLogin,
     validatePasswordReset,
+    validateTwoFactorToken,
+    validateTwoFactorSetup,
     validate,
     securityMiddleware,
     validatePhone,
