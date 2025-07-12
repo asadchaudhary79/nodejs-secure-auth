@@ -1,6 +1,6 @@
 # NodeJS Secure Authentication Backend
 
-A secure, role-based authentication system built with Node.js, Express, and MongoDB. This backend provides a robust authentication system with role-based access control (RBAC), email verification, and user management features.
+A secure, role-based authentication system built with Node.js, Express, and MongoDB. This backend provides a robust authentication system with role-based access control (RBAC), email verification, user management features, and optional Two-Factor Authentication (2FA).
 
 ## Features
 
@@ -16,6 +16,7 @@ A secure, role-based authentication system built with Node.js, Express, and Mong
   - User Management
   - Block/Unblock Users
   - View Blocked Users
+- 🛡️ **Two-Factor Authentication (2FA) with TOTP**
 
 ## Tech Stack
 
@@ -26,6 +27,7 @@ A secure, role-based authentication system built with Node.js, Express, and Mong
 - Nodemailer for Email Service
 - Express Rate Limit for Security
 - Helmet for Security Headers
+- **speakeasy** and **qrcode** for 2FA
 
 ## Prerequisites
 
@@ -277,6 +279,52 @@ Returns the profile information of the currently logged-in user. Requires a vali
 For comprehensive admin functionality including user management, blocking/unblocking users, and administrative controls, please refer to the dedicated Admin API documentation:
 
 📋 **[Admin API Documentation](./ADMIN_API_DOCS.md)**
+
+### 2FA (Two-Factor Authentication)
+
+**2FA adds an extra layer of security to user accounts.**
+
+- When 2FA is **enabled** for a user, login requires both password and a 6-digit code from an authenticator app (Google Authenticator, Authy, etc).
+- When 2FA is **disabled**, login only requires email/phone and password.
+
+#### 2FA Login Flow
+
+1. **Login** with email/phone and password:
+   - If 2FA is enabled, you will receive a response with `status: "2fa_required"`.
+   - If 2FA is not enabled, you are logged in directly.
+2. **Verify 2FA**:
+   - Use the `/api/auth/verify-2fa` endpoint with your email and the 6-digit code from your authenticator app to complete login.
+
+#### Quick 2FA API Usage
+
+- **Setup 2FA:**
+  - `POST /api/auth/setup-2fa` (requires JWT token)
+  - Scan the QR code with your authenticator app
+- **Verify 2FA Setup:**
+  - `POST /api/auth/verify-2fa-setup` (with JWT token and 6-digit code)
+- **Enable 2FA:**
+  - `POST /api/auth/enable-2fa` (with JWT token)
+- **Disable 2FA:**
+  - `POST /api/auth/disable-2fa` (with JWT token)
+- **Login with 2FA:**
+  - `POST /api/auth/login` (email + password)
+  - If `2fa_required`, then:
+  - `POST /api/auth/verify-2fa` (email + 6-digit code)
+
+#### 2FA Troubleshooting
+
+- If you see `Invalid 2FA token` errors:
+  - Make sure you scanned the **latest QR code** after (re)setting up 2FA.
+  - Remove old entries for this account from your authenticator app before scanning a new QR code.
+  - Ensure your device time is set to automatic/synchronized.
+  - Use the `/api/auth/debug-2fa` endpoint (with JWT token) to see the current valid code the server expects.
+  - The code in your authenticator app **must match** the `currentToken` from the debug endpoint.
+
+#### More Details
+
+See the full 2FA API documentation for all endpoints, request/response examples, and troubleshooting:
+
+📋 **[2FA API Documentation](./2FA_API_DOCS.md)**
 
 ## Security Features
 

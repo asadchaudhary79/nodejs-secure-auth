@@ -24,6 +24,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.6.1",
     "nodemailer": "^6.9.8",
+    "qrcode": "^1.5.4",
+    "speakeasy": "^2.0.0",
     "twilio": "^5.6.1",
     "xss-clean": "^0.1.4"
   },
