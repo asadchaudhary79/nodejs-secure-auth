@@ -23,7 +23,7 @@ Authorization: Bearer your_jwt_token
 ## 🌐 Base URL
 
 ```
-http://localhost:3000/api/admin
+http://localhost:5000/api/admin
 ```
 
 ---

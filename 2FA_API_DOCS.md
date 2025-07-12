@@ -32,7 +32,7 @@ The Two-Factor Authentication (2FA) system adds an extra layer of security to us
 ## 🌐 Base URL
 
 ```
-http://localhost:3000/api/auth
+http://localhost:5000/api/auth
 ```
 
 ---
