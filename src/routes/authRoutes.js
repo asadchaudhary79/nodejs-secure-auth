@@ -52,7 +52,6 @@ router.post('/disable-2fa', verifyToken, authController.disableTwoFactor);
 // Verify 2FA token during login
 router.post('/verify-2fa', validateTwoFactorToken, validate, authController.verifyTwoFactorToken);
 
-// Debug endpoint for 2FA testing (remove in production)
-router.get('/debug-2fa', verifyToken, authController.debugTwoFactor);
+
 
 module.exports = router; 
