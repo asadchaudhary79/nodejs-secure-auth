@@ -373,6 +373,12 @@ Authorization: Bearer {token}
 - Use the debug endpoint to verify the expected token
 - Make sure you're using the latest QR code after setup
 
+#### More Details
+
+See the full 2FA API documentation for all endpoints, request/response examples, and troubleshooting:
+
+📋 **[2FA API Documentation](./2FA_API_DOCS.md)**
+
 ### 👮‍♂️ Admin API
 
 For comprehensive admin functionality including user management, blocking/unblocking users, and administrative controls, please refer to the dedicated Admin API documentation:
