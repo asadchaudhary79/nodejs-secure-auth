@@ -367,11 +367,11 @@ def unblock_user(token, user_id):
 
 ```bash
 # Get blocked users
-curl -X GET "http://localhost:3000/api/admin/blocked-users?page=1&limit=10" \
+curl -X GET "http://localhost:5000/api/admin/blocked-users?page=1&limit=10" \
   -H "Authorization: Bearer your_jwt_token"
 
 # Block a user
-curl -X POST "http://localhost:3000/api/admin/block-user/507f1f77bcf86cd799439011" \
+curl -X POST "http://localhost:5000/api/admin/block-user/507f1f77bcf86cd799439011" \
   -H "Authorization: Bearer your_jwt_token" \
   -H "Content-Type: application/json" \
   -d '{
@@ -380,7 +380,7 @@ curl -X POST "http://localhost:3000/api/admin/block-user/507f1f77bcf86cd79943901
   }'
 
 # Unblock a user
-curl -X POST "http://localhost:3000/api/admin/unblock-user/507f1f77bcf86cd799439011" \
+curl -X POST "http://localhost:5000/api/admin/unblock-user/507f1f77bcf86cd799439011" \
   -H "Authorization: Bearer your_jwt_token"
 ```
 
