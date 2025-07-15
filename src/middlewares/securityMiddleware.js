@@ -103,9 +103,20 @@ const validate = (req, res, next) => {
     next();
 };
 
-// Security middleware
+// Security middleware with CORS-friendly helmet configuration
 const securityMiddleware = [
-    helmet(), // Set security HTTP headers
+    helmet({
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+        crossOriginEmbedderPolicy: false,
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'"],
+                imgSrc: ["'self'", "data:", "https:"],
+            },
+        },
+    }),
     mongoSanitize(), // Sanitize MongoDB queries
     xss(), // Prevent XSS attacks
     hpp(), // Prevent HTTP Parameter Pollution

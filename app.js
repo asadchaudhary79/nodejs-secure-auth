@@ -6,6 +6,7 @@ const adminRoutes = require('./src/routes/adminRoutes');
 const errorMiddleware = require('./src/middlewares/errorMiddleware');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const { securityMiddleware } = require('./src/middlewares/securityMiddleware');
 
 dotenv.config();
@@ -13,10 +14,7 @@ connectDB();
 
 const app = express();
 
-// Security middleware
-app.use(securityMiddleware);
-
-// CORS configuration
+// CORS configuration - MUST come before other middleware
 const corsOptions = {
     origin: function (origin, callback) {
         // Allow requests with no origin (like mobile apps or curl requests)
@@ -47,12 +45,28 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Security middleware
+app.use(securityMiddleware);
+
 // Body parser
 app.use(express.json());
 
+// Cookie parser
+app.use(cookieParser());
+
 // Health check
 app.get('/', (req, res) => {
-    res.send('Server is running on port 5000 and backend url is http://localhost:5000');
+    res.send(`Server is running on port ${process.env.PORT}`);
+});
+
+// CORS test endpoint
+app.get('/api/test-cors', (req, res) => {
+    res.json({
+        status: 'success',
+        message: 'CORS is working correctly',
+        timestamp: new Date().toISOString(),
+        origin: req.headers.origin || 'No origin header'
+    });
 });
 
 // Routes
