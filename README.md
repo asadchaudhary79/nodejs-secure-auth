@@ -521,27 +521,37 @@ If you encounter any issues or have questions:
 
 ## 🔄 Changelog
 
-### Version 1.0.0 (Current Release)
+### Version 2.0.0 (Current Release)
+
+#### Release Notes
+- Version bump to 2.0.0 for stable ES Modules release
+- All features from v1.0.0 are stable and production-ready
+
+### Version 1.0.0
 
 #### Major Changes & Improvements
 
 - ✅ **Migrated to ES Modules (ESM)**
+
   - Converted entire codebase from CommonJS to ES Modules
   - Updated all `require()` statements to `import` statements
   - Changed all `module.exports` to `export` and `export default`
   - Added `"type": "module"` to package.json
 
 - ✅ **Removed Nodemon Dependency**
+
   - Removed nodemon package from devDependencies
   - Updated dev script to use Node.js built-in `--watch` flag
   - Simplified development workflow
 
 - ✅ **Code Structure Improvements**
+
   - Fixed all import/export inconsistencies
   - Resolved naming conflicts (e.g., verifyTwoFactorToken)
   - Improved code organization and maintainability
 
 - ✅ **Postman Collection**
+
   - Created comprehensive Postman collection with all API endpoints
   - Added Postman environment file for easy testing
   - Included detailed request/response examples
@@ -554,15 +564,18 @@ If you encounter any issues or have questions:
 #### Technical Details
 
 **Breaking Changes:**
+
 - All files now use ES Module syntax
 - Import paths require `.js` extension
 - Default exports used for models and main app
 
 **Dependencies:**
+
 - Removed: `nodemon` (replaced with Node.js --watch)
 - All other dependencies remain unchanged
 
 **File Changes:**
+
 - All `.js` files converted to ES Modules
 - Updated package.json with `"type": "module"`
 - Fixed import/export statements across the codebase
@@ -579,7 +592,7 @@ If you encounter any issues or have questions:
 
 ## 📦 Version Information
 
-**Current Version:** `1.0.0`
+**Current Version:** `2.0.0`
 
 **Release Date:** January 2025
 
