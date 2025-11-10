@@ -1,5 +1,5 @@
 const getVerifyEmailTemplate = (data) => {
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -35,4 +35,4 @@ const getVerifyEmailTemplate = (data) => {
     `;
 };
 
-module.exports = { getVerifyEmailTemplate }; 
+export { getVerifyEmailTemplate };

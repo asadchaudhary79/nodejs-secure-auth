@@ -1,9 +1,9 @@
-const { getRegisterTemplate } = require('./register');
-const { getForgotPasswordTemplate } = require('./forgotPassword');
-const { getVerifyEmailTemplate } = require('./emailVerified');
+import { getRegisterTemplate } from "./register.js";
+import { getForgotPasswordTemplate } from "./forgotPassword.js";
+import { getVerifyEmailTemplate } from "./emailVerified.js";
 
-module.exports = {
-    getRegisterTemplate,
-    getForgotPasswordTemplate,
-    getVerifyEmailTemplate,
-}; 
+export {
+  getRegisterTemplate,
+  getForgotPasswordTemplate,
+  getVerifyEmailTemplate,
+};

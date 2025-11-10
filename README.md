@@ -27,7 +27,7 @@ A secure, role-based authentication system built with Node.js, Express, and Mong
 - **Database:** MongoDB with Mongoose ODM
 - **Authentication:** JWT (JSON Web Tokens)
 - **Email Service:** Nodemailer with SMTP
-- **Security:** 
+- **Security:**
   - Express Rate Limit for brute force protection
   - Helmet for security headers
   - bcrypt for password hashing
@@ -147,6 +147,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -169,6 +170,7 @@ Content-Type: application/json
 ```
 
 **Response (2FA Disabled):**
+
 ```json
 {
   "status": "success",
@@ -181,6 +183,7 @@ Content-Type: application/json
 ```
 
 **Response (2FA Enabled):**
+
 ```json
 {
   "status": "2fa_required",
@@ -189,6 +192,7 @@ Content-Type: application/json
 ```
 
 **Note:**
+
 - Sets HTTP-only cookies: `token` (15 min) and `refreshToken` (7 days)
 - Cookies are secure in production and SameSite: strict
 - If 2FA is enabled, cookies are only set after successful 2FA verification
@@ -200,6 +204,7 @@ GET /api/auth/verify-email?email=john@example.com&code=123456
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -215,6 +220,7 @@ Authorization: Bearer {token}
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -236,6 +242,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -255,6 +262,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -276,6 +284,7 @@ Authorization: Bearer {token}
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -291,6 +300,7 @@ Authorization: Bearer {token}
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -313,12 +323,14 @@ Authorization: Bearer {token}
 #### 2FA Setup Flow
 
 1. **Setup 2FA:**
+
    ```http
    POST /api/auth/setup-2fa
    Authorization: Bearer {token}
    ```
-   
+
    **Response:**
+
    ```json
    {
      "status": "success",
@@ -330,11 +342,12 @@ Authorization: Bearer {token}
    ```
 
 2. **Verify 2FA Setup:**
+
    ```http
    POST /api/auth/verify-2fa-setup
    Authorization: Bearer {token}
    Content-Type: application/json
-   
+
    {
      "token": "123456"
    }
@@ -351,10 +364,11 @@ Authorization: Bearer {token}
 1. **Login** with email/phone and password
 2. If 2FA is enabled, you'll receive `status: "2fa_required"`
 3. **Verify 2FA:**
+
    ```http
    POST /api/auth/verify-2fa
    Content-Type: application/json
-   
+
    {
      "email": "john@example.com",
      "token": "123456"
@@ -507,7 +521,54 @@ If you encounter any issues or have questions:
 
 ## 🔄 Changelog
 
-### Recent Updates
+### Version 1.0.0 (Current Release)
+
+#### Major Changes & Improvements
+
+- ✅ **Migrated to ES Modules (ESM)**
+  - Converted entire codebase from CommonJS to ES Modules
+  - Updated all `require()` statements to `import` statements
+  - Changed all `module.exports` to `export` and `export default`
+  - Added `"type": "module"` to package.json
+
+- ✅ **Removed Nodemon Dependency**
+  - Removed nodemon package from devDependencies
+  - Updated dev script to use Node.js built-in `--watch` flag
+  - Simplified development workflow
+
+- ✅ **Code Structure Improvements**
+  - Fixed all import/export inconsistencies
+  - Resolved naming conflicts (e.g., verifyTwoFactorToken)
+  - Improved code organization and maintainability
+
+- ✅ **Postman Collection**
+  - Created comprehensive Postman collection with all API endpoints
+  - Added Postman environment file for easy testing
+  - Included detailed request/response examples
+
+- ✅ **Documentation Updates**
+  - Updated project name to "nodejs-secure-auth"
+  - Enhanced README with version information
+  - Added changelog section for tracking changes
+
+#### Technical Details
+
+**Breaking Changes:**
+- All files now use ES Module syntax
+- Import paths require `.js` extension
+- Default exports used for models and main app
+
+**Dependencies:**
+- Removed: `nodemon` (replaced with Node.js --watch)
+- All other dependencies remain unchanged
+
+**File Changes:**
+- All `.js` files converted to ES Modules
+- Updated package.json with `"type": "module"`
+- Fixed import/export statements across the codebase
+
+### Previous Updates
+
 - Enhanced CORS configuration for cross-origin requests
 - Improved 2FA implementation with better error handling
 - Added comprehensive API documentation
@@ -516,6 +577,16 @@ If you encounter any issues or have questions:
 
 ---
 
+## 📦 Version Information
+
+**Current Version:** `1.0.0`
+
+**Release Date:** January 2025
+
+**Node.js Version:** Requires Node.js v14 or higher (ES Modules support)
+
+**MongoDB Version:** Compatible with MongoDB 4.0+
+
+---
+
 **Built with ❤️ for secure authentication**
-
-

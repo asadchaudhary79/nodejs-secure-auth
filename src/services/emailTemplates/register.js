@@ -1,5 +1,5 @@
 const getRegisterTemplate = (data) => {
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -88,4 +88,4 @@ const getRegisterTemplate = (data) => {
     `;
 };
 
-module.exports = { getRegisterTemplate }; 
+export { getRegisterTemplate };

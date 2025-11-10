@@ -1,5 +1,5 @@
 const getForgotPasswordTemplate = (data) => {
-    return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -88,4 +88,4 @@ const getForgotPasswordTemplate = (data) => {
     `;
 };
 
-module.exports = { getForgotPasswordTemplate }; 
+export { getForgotPasswordTemplate };
