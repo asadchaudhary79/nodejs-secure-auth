@@ -19,6 +19,7 @@ A secure, role-based authentication system built with Node.js, Express, and Mong
 - 🛡️ **Two-Factor Authentication (2FA)** with TOTP support
 - 🌐 **CORS Support** for cross-origin requests
 - 🍪 **Secure Cookie Management** with HTTP-only cookies
+- ⚡ **Inngest Integration** - Reliable background jobs and event-driven workflows
 
 ## 🛠️ Tech Stack
 
@@ -26,19 +27,20 @@ A secure, role-based authentication system built with Node.js, Express, and Mong
 - **Framework:** Express.js
 - **Database:** MongoDB with Mongoose ODM
 - **Authentication:** JWT (JSON Web Tokens)
-- **Email Service:** Nodemailer with SMTP
+- **Email Service:** SendGrid API
 - **Security:**
   - Express Rate Limit for brute force protection
   - Helmet for security headers
   - bcrypt for password hashing
 - **2FA:** speakeasy and qrcode for TOTP implementation
 - **Validation:** Express-validator for input validation
+- **Background Jobs:** Inngest for reliable event-driven workflows and scheduled tasks
 
 ## 📋 Prerequisites
 
 - Node.js (v14 or higher)
 - MongoDB (local or cloud instance)
-- SMTP Server (for email functionality)
+- SendGrid Account (for email functionality)
 - Git
 
 ## 🚀 Installation & Setup
@@ -78,15 +80,18 @@ JWT_EXPIRES_IN=15m
 JWT_REFRESH_SECRET=your_refresh_token_secret_2024_unique_string
 JWT_REFRESH_EXPIRES_IN=7d
 
-# Email Configuration (SMTP)
+# Email Configuration (SendGrid)
 SENDGRID_API_KEY=your_sendgrid_api_key
-SENDER_VERIFICATION_EMAIL=your_verify_email@domain.com
-EMAIL_APP_PASSWORD=your_email_app_password
 SENDGRID_FROM_NAME=Your App Name
 
 # Admin Configuration
 ADMIN_USERNAME=admin_username
 ADMIN_EMAIL=admin@domain.com
+
+# Inngest Configuration (for background jobs and workflows)
+INNGEST_EVENT_KEY=your_inngest_event_key
+INNGEST_SIGNING_KEY=your_inngest_signing_key
+# For local development, you can use: local-dev-key
 ```
 
 ### 4. Database Setup
@@ -98,28 +103,75 @@ Ensure MongoDB is running and accessible. The application will automatically cre
 Run the admin creation script:
 
 ```bash
-node scripts/createAdmin.js
+node src/scripts/createAdmin.js
 ```
+
+> **Note:** The `createAdmin.js` script currently uses CommonJS syntax. For consistency with the ES Module codebase, consider converting it to ES Modules or use it as-is for now.
 
 ### 6. Start the Server
 
+#### Option 1: Run Server Only (Inngest will work in dev mode)
+
 ```bash
-# Development mode
+npm run dev
+```
+
+#### Option 2: Run Server + Inngest Dev Server (Recommended for local development)
+
+**Using Scripts (Easiest):**
+
+**Linux/Mac:**
+
+```bash
+chmod +x start-dev.sh
+./start-dev.sh
+```
+
+**Windows:**
+
+```bash
+start-dev.bat
+```
+
+**Manual (Two Terminals):**
+
+```bash
+# Terminal 1: Start your server
 npm run dev
 
-# Production mode
+# Terminal 2: Start Inngest dev server
+npm run dev:inngest
+```
+
+#### Production Mode
+
+```bash
 npm start
 ```
 
-The server will start on `http://localhost:5000`
+**Server URLs:**
+
+- API Server: `http://localhost:5000`
+- Inngest Dev Server: `http://localhost:8288` (when running dev:inngest)
+- Inngest Endpoint: `http://localhost:5000/api/inngest`
 
 ## 📚 API Documentation
 
-### Base URL
+### Base URLs
+
+**REST API:**
 
 ```
 http://localhost:5000/api
 ```
+
+**Inngest Endpoint:**
+
+```
+http://localhost:5000/api/inngest
+```
+
+> 📖 **Note:** Inngest handles background jobs like email sending, cleanup tasks, and scheduled operations. See [Inngest Documentation](#-inngest-integration) below.
 
 ### Authentication
 
@@ -150,12 +202,18 @@ Content-Type: application/json
 
 ```json
 {
-  "status": "success",
-  "message": "User registered. Please verify your email."
+  "message": "Registration successful. Please verify your email to activate your account.",
+  "expiresIn": "24 hours"
 }
 ```
 
-**Note:** A verification email will be sent with a verification code and link.
+**Important Notes:**
+
+- User data is stored in `PendingUser` collection (NOT in User collection)
+- User account is created ONLY after email verification
+- Verification code expires in 24 hours
+- If you register again with same email, old pending registration will be deleted and new verification code will be sent
+- A verification email will be sent with a verification code and link
 
 #### Login
 
@@ -207,10 +265,16 @@ GET /api/auth/verify-email?email=john@example.com&code=123456
 
 ```json
 {
-  "status": "success",
-  "message": "Email verified successfully"
+  "message": "Email verified successfully! Your account has been created. You can now login."
 }
 ```
+
+**Important Notes:**
+
+- This endpoint creates the user in the database AFTER verification
+- User is moved from `PendingUser` to `User` collection
+- Verification confirmation email is sent automatically
+- If verification code is expired, you need to register again
 
 #### Logout
 
@@ -270,6 +334,8 @@ Content-Type: application/json
 }
 ```
 
+**Note:** Password reset email is sent directly via SendGrid. An Inngest function exists for this but is not currently integrated.
+
 #### Reset Password
 
 ```http
@@ -310,7 +376,7 @@ Authorization: Bearer {token}
     "phone": "+1234567890",
     "role": "user",
     "isEmailVerified": true,
-    "twoFactorEnabled": false,
+    "is2FaActivated": false,
     "createdAt": "2024-01-01T00:00:00.000Z"
   }
 }
@@ -399,6 +465,55 @@ For comprehensive admin functionality including user management, blocking/unbloc
 
 📋 **[Admin API Documentation](./ADMIN_API_DOCS.md)**
 
+### ⚡ Inngest Integration
+
+This project uses [Inngest](https://www.inngest.com/) for reliable background jobs and event-driven workflows. Inngest ensures that critical operations like email sending, cleanup tasks, and scheduled jobs are executed reliably with automatic retries and error handling.
+
+#### Background Jobs
+
+**Email Jobs:**
+
+- `send-registration-email` - Sends verification email after user registration (via Inngest)
+- `send-email-verified-notification` - Sends confirmation email after email verification (via Inngest)
+- `send-password-reset-email` - Sends password reset link (via Inngest - function available but currently sent directly)
+
+**Cleanup Jobs (Scheduled):**
+
+- `cleanup-expired-tokens` - Removes expired blacklisted tokens (runs daily at 2 AM)
+- `cleanup-expired-reset-tokens` - Removes expired password reset tokens (runs hourly)
+- `cleanup-expired-pending-users` - Removes expired pending registrations (runs hourly)
+- `unlock-expired-accounts` - Unlocks accounts after lockout period (runs every 15 minutes)
+
+**User Verification Jobs:**
+
+- `create-user-after-verification` - Creates user in database after email verification
+
+#### How It Works
+
+1. **Event-Driven Architecture**: Most controllers trigger Inngest events for email operations (registration and email verification). Password reset currently sends emails directly but has an Inngest function available for future migration.
+2. **Automatic Retries**: Failed jobs are automatically retried with exponential backoff
+3. **Reliable Execution**: Jobs are queued and executed reliably, even if the server restarts
+4. **Scheduled Tasks**: Cron-based jobs run automatically for cleanup and maintenance
+
+#### Local Development
+
+For local development, Inngest runs in development mode. You can:
+
+- View job execution logs in the console
+- Monitor job status and retries
+- Test event triggers without external dependencies
+
+#### Production Setup
+
+1. Sign up at [inngest.com](https://www.inngest.com/)
+2. Create an app and get your event key
+3. Add `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` to your `.env` file
+4. Deploy your app - Inngest will automatically discover and register your functions
+
+#### More Details
+
+See the complete Inngest setup guide: **[INNGEST_SETUP.md](./INNGEST_SETUP.md)**
+
 ## 🔒 Security Features
 
 1. **JWT-based Authentication** with short-lived tokens
@@ -406,13 +521,15 @@ For comprehensive admin functionality including user management, blocking/unbloc
 3. **Rate Limiting** to prevent brute force attacks
 4. **Account Lockout** after multiple failed login attempts
 5. **Secure Password Reset** via email verification
-6. **Email Verification** for new user accounts
-7. **Session Management** with token blacklisting
-8. **Security Headers** via Helmet middleware
-9. **CORS Protection** with configurable origins
-10. **Two-Factor Authentication** with TOTP support
-11. **HTTP-only Cookies** for secure token storage
-12. **Input Validation** and sanitization
+6. **Email Verification** for new user accounts (mandatory before account creation)
+7. **Pending User Management** - Unverified registrations stored separately
+8. **Session Management** with token blacklisting
+9. **Security Headers** via Helmet middleware
+10. **CORS Protection** with configurable origins
+11. **Two-Factor Authentication** with TOTP support
+12. **HTTP-only Cookies** for secure token storage
+13. **Input Validation** and sanitization
+14. **Pending Registration Management** - Automatic cleanup of expired registrations
 
 ## 🚨 Error Handling
 
@@ -459,31 +576,41 @@ curl -X POST http://localhost:5000/api/auth/login \
 ## 📁 Project Structure
 
 ```
-SecureAuth-nodejs/
-├── config/                 # Configuration files
-│   ├── dbConfig.js        # Database configuration
-│   └── emailConfig.js     # Email service configuration
-├── controllers/           # Route controllers
-│   ├── adminController.js # Admin functionality
-│   └── authController.js  # Authentication logic
-├── middlewares/          # Express middlewares
-│   ├── authMiddleware.js # JWT authentication
-│   ├── errorMiddleware.js # Error handling
-│   └── securityMiddleware.js # Security features
-├── models/               # Database models
-│   ├── BlacklistedToken.js # Token blacklist
-│   └── User.js          # User model
-├── routes/               # API routes
-│   ├── adminRoutes.js   # Admin endpoints
-│   └── authRoutes.js    # Authentication endpoints
-├── services/            # Business logic
-│   ├── emailService.js  # Email functionality
-│   └── emailTemplates/  # Email templates
-├── utils/               # Utility functions
-│   ├── encrypt.js       # Encryption utilities
-│   └── jwt.js          # JWT utilities
-├── scripts/             # Utility scripts
-│   └── createAdmin.js   # Admin user creation
+nodejs-secure-auth/
+├── src/
+│   ├── config/            # Configuration files
+│   │   ├── dbConfig.js    # Database configuration
+│   │   ├── emailConfig.js # Email service configuration
+│   │   └── inngestConfig.js # Inngest client configuration
+│   ├── controllers/      # Route controllers
+│   │   ├── adminController.js # Admin functionality
+│   │   └── authController.js  # Authentication logic
+│   ├── middlewares/      # Express middlewares
+│   │   ├── authMiddleware.js  # JWT authentication
+│   │   ├── errorMiddleware.js # Error handling
+│   │   └── securityMiddleware.js # Security features
+│   ├── models/          # Database models
+│   │   ├── BlacklistedToken.js # Token blacklist
+│   │   ├── PendingUser.js     # Pending user registrations (before email verification)
+│   │   └── User.js            # User model (verified users only)
+│   ├── routes/          # API routes
+│   │   ├── adminRoutes.js     # Admin endpoints
+│   │   └── authRoutes.js      # Authentication endpoints
+│   ├── services/        # Business logic
+│   │   ├── emailService.js    # Email functionality (SendGrid)
+│   │   └── emailTemplates/   # Email templates
+│   ├── inngest/         # Inngest functions
+│   │   ├── functions/  # Background job functions
+│   │   │   ├── emailFunctions.js    # Email sending jobs
+│   │   │   ├── cleanupFunctions.js  # Cleanup scheduled jobs
+│   │   │   └── userVerification.js  # User creation after verification
+│   │   └── serve.js     # Inngest serve handler
+│   ├── utils/           # Utility functions
+│   │   ├── encrypt.js   # Encryption utilities
+│   │   ├── jwt.js       # JWT utilities
+│   │   └── inngestEvents.js # Inngest event triggers
+│   └── scripts/         # Utility scripts
+│       └── createAdmin.js # Admin user creation (Note: needs ES Module conversion)
 ├── app.js              # Express app configuration
 ├── server.js           # Server entry point
 └── package.json        # Dependencies and scripts
@@ -523,9 +650,29 @@ If you encounter any issues or have questions:
 
 ### Version 2.0.0 (Current Release)
 
+#### Major Features Added
+
+- ✅ **Inngest Integration**
+
+  - Added Inngest for reliable background jobs and event-driven workflows
+  - Migrated email sending to Inngest functions for better reliability
+  - Added scheduled cleanup jobs (expired tokens, expired pending users, account unlock)
+  - Implemented event-driven architecture for async operations
+  - Automatic retries and error handling for background jobs
+
+- ✅ **Improved Registration Flow**
+  - Users are stored in `PendingUser` collection until email verification
+  - User account is created ONLY after email verification
+  - Prevents unverified users from being added to main User collection
+  - Automatic cleanup of expired pending registrations (24 hours)
+  - Allows re-registration by deleting old pending registrations
+  - Better database hygiene and security
+
 #### Release Notes
+
 - Version bump to 2.0.0 for stable ES Modules release
 - All features from v1.0.0 are stable and production-ready
+- Added Inngest for improved reliability and background job management
 
 ### Version 1.0.0
 

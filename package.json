@@ -5,7 +5,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "dev:inngest": "npx inngest-cli dev",
+    "start": "node server.js"
   },
   "author": "",
   "license": "ISC",
@@ -21,6 +23,7 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
+    "inngest": "^3.18.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.6.1",
     "node-fetch": "^2.7.0",

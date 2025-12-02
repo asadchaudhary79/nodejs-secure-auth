@@ -1,11 +1,11 @@
 import User from "../models/User.js";
+import PendingUser from "../models/PendingUser.js";
 import bcrypt from "bcrypt";
 import {
   generateToken,
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt.js";
-import { sendEmail } from "../services/emailService.js";
 import {
   generateTwoFactorSecret,
   generateQRCode,
@@ -14,12 +14,13 @@ import {
 } from "../utils/twoFactorAuth.js";
 import crypto from "crypto";
 import BlacklistedToken from "../models/BlacklistedToken.js";
+import { inngest, Events } from "../config/inngestConfig.js";
 
 export const register = async (req, res) => {
   try {
     const { name, email, phone, password, role } = req.body;
 
-    // Check if user already exists
+    // Check if user already exists in User collection (verified user)
     const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
     if (existingUser) {
       return res
@@ -27,41 +28,67 @@ export const register = async (req, res) => {
         .json({ message: "User with this email or phone already exists" });
     }
 
+    // Check if pending registration already exists for same email/phone
+    // If exists, delete old one(s) and create new (allow re-registration with new code)
+    const existingPending = await PendingUser.find({
+      $or: [{ email }, { phone }],
+    });
+    
+    if (existingPending && existingPending.length > 0) {
+      // Delete all old pending registrations for this email/phone
+      const deletedCount = await PendingUser.deleteMany({
+        $or: [{ email }, { phone }],
+      });
+      console.log(`🔄 Deleted ${deletedCount.deletedCount} old pending registration(s) for ${email}, creating new one`);
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000
     ).toString(); // 6 digits
 
-    const user = await User.create({
+    // Store in PendingUser collection (NOT in User collection)
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const pendingUser = await PendingUser.create({
       name,
       email,
       phone,
       password: hashedPassword,
       verificationCode,
       role: role || "user",
-      passwordHistory: [{ password: hashedPassword }],
+      expiresAt,
     });
 
-    const verifyUrl = `${process.env.BACKEND_RUL}/verify-email?email=${email}&code=${user.verificationCode}`;
+    const verifyUrl = `${
+      process.env.BACKEND_URL || process.env.BACKEND_RUL
+    }/api/auth/verify-email?email=${email}&code=${verificationCode}`;
 
+    // Trigger Inngest event for registration email (async, non-blocking)
     try {
-      await sendEmail({
-        to: email,
-        subject: "Verify your email",
-        template: "register",
+      await inngest.send({
+        name: Events.USER_REGISTRATION_PENDING,
         data: {
-          name: user.name,
-          code: verificationCode,
+          email,
+          name,
+          verificationCode,
           verifyUrl,
         },
       });
     } catch (err) {
-      console.log(`Email not sent for user ${email}:`, err.message);
+      console.error(`Failed to trigger registration email event:`, err.message);
+      // Delete pending user if email trigger fails
+      await PendingUser.deleteOne({ _id: pendingUser._id });
+      return res.status(500).json({
+        message: "Failed to send verification email. Please try again.",
+      });
     }
 
-    res
-      .status(201)
-      .json({ message: "User registered. Please verify your email." });
+    res.status(201).json({
+      message:
+        "Registration successful. Please verify your email to activate your account.",
+      expiresIn: "24 hours",
+    });
   } catch (error) {
     res
       .status(500)
@@ -169,29 +196,72 @@ export const login = async (req, res) => {
 };
 
 export const verifyEmail = async (req, res) => {
-  const { code, email } = req.query;
-  const user = await User.findOne({ email, verificationCode: code });
-  if (!user) return res.status(400).json({ message: "Invalid code or email" });
-  user.isVerified = true;
-  user.verificationCode = undefined;
-  await user.save();
-
-  // Send email verified notification
   try {
-    await sendEmail({
-      to: user.email,
-      subject: "Your email has been verified!",
-      template: "emailVerified",
-      data: { name: user.name },
-    });
-  } catch (err) {
-    console.log(
-      `Email verified notification not sent for user ${user.email}:`,
-      err.message
-    );
-  }
+    const { code, email } = req.query;
 
-  res.json({ message: "Email verified successfully" });
+    if (!code || !email) {
+      return res.status(400).json({ message: "Code and email are required" });
+    }
+
+    // Find pending user (not verified user)
+    const pendingUser = await PendingUser.findOne({
+      email,
+      verificationCode: code,
+    });
+
+    if (!pendingUser) {
+      return res.status(400).json({
+        message:
+          "Invalid verification code or email. The code may have expired or already been used.",
+      });
+    }
+
+    // Check if verification code has expired
+    if (new Date() > pendingUser.expiresAt) {
+      await PendingUser.deleteOne({ _id: pendingUser._id });
+      return res.status(400).json({
+        message: "Verification code has expired. Please register again.",
+      });
+    }
+
+    // Check if user already exists (edge case - someone verified manually)
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      // Delete pending user
+      await PendingUser.deleteOne({ _id: pendingUser._id });
+      return res.status(400).json({
+        message: "Email already verified. Please login.",
+      });
+    }
+
+    // Trigger Inngest event to create user after verification
+    // This will create the user in database and send verification confirmation email
+    try {
+      await inngest.send({
+        name: Events.EMAIL_VERIFIED,
+        data: {
+          email: pendingUser.email,
+          verificationCode: pendingUser.verificationCode,
+          name: pendingUser.name,
+        },
+      });
+
+      res.json({
+        message:
+          "Email verified successfully! Your account has been created. You can now login.",
+      });
+    } catch (err) {
+      console.error(`Failed to trigger email verification event:`, err.message);
+      return res.status(500).json({
+        message: "Verification failed. Please try again or contact support.",
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Error verifying email",
+      error: error.message,
+    });
+  }
 };
 
 export const forgotPassword = async (req, res) => {

@@ -8,6 +8,7 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { securityMiddleware } from "./src/middlewares/securityMiddleware.js";
+import { inngestHandler } from "./src/inngest/serve.js";
 
 dotenv.config();
 connectDB();
@@ -72,6 +73,9 @@ app.get("/api/test-cors", (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+
+// Inngest endpoint for background jobs and workflows
+app.use("/api/inngest", inngestHandler);
 
 // Error handling
 app.use(errorMiddleware);
